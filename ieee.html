@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IEEE 754 Floating-Point Number Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin: 10px 0;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .section {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>IEEE 754 Floating-Point Number Simulator</h1>
+        
+        <div class="section">
+            <label for="precision">Choose Precision:</label>
+            <select id="precision">
+                <option value="single">Single (32-bit)</option>
+                <option value="double">Double (64-bit)</option>
+            </select>
+        </div>
+
+        <div class="section">
+            <label for="number">Enter a Floating-Point Number:</label>
+            <input type="number" id="number" step="any">
+        </div>
+
+        <button onclick="convertToIEEE754()">Convert</button>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        function convertToIEEE754() {
+            const number = parseFloat(document.getElementById("number").value);
+            const precision = document.getElementById("precision").value;
+
+            if (isNaN(number)) {
+                alert("Please enter a valid number!");
+                return;
+            }
+
+            const resultDiv = document.getElementById("result");
+            let sign, exponent, mantissa, biasedExponent, unbiasedExponent, mantissaBinary, binaryStr;
+
+            if (precision === "single") {
+                // Single precision (32-bit)
+                let buffer = new ArrayBuffer(4); // 32 bits
+                let view = new DataView(buffer);
+                view.setFloat32(0, number); // Set the 32-bit float
+                let binary = view.getUint32(0).toString(2).padStart(32, '0'); // Convert to 32-bit binary string
+                sign = binary.charAt(0);
+                biasedExponent = parseInt(binary.substr(1, 8), 2);
+                mantissa = binary.substr(9);
+
+                unbiasedExponent = biasedExponent - 127; // Single precision bias = 127
+                mantissaBinary = "1." + mantissa; // Mantissa with the implicit 1
+
+            } else if (precision === "double") {
+                // Double precision (64-bit)
+                let buffer = new ArrayBuffer(8); // 64 bits
+                let view = new DataView(buffer);
+                view.setFloat64(0, number); // Set the 64-bit float
+
+                // Get the raw 64-bit binary string
+                let binary = view.getBigUint64(0).toString(2).padStart(64, '0');
+                sign = binary.charAt(0);
+                biasedExponent = parseInt(binary.substr(1, 11), 2);
+                mantissa = binary.substr(12);
+
+                unbiasedExponent = biasedExponent - 1023; // Double precision bias = 1023
+                mantissaBinary = "1." + mantissa; // Mantissa with the implicit 1
+            }
+
+            resultDiv.innerHTML = `
+                <h3>IEEE 754 Representation</h3>
+                <p><strong>Number:</strong> ${number}</p>
+                <p><strong>Sign:</strong> ${sign} (0 = positive, 1 = negative)</p>
+                <p><strong>Exponent (biased):</strong> ${biasedExponent}</p>
+                <p><strong>Exponent (unbiased):</strong> ${unbiasedExponent}</p>
+                <p><strong>Mantissa:</strong> ${mantissaBinary}</p>
+            `;
+        }
+    </script>
+
+</body>
+</html>
